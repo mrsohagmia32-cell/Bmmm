@@ -13,11 +13,22 @@ def index():
   return render_template("index.html")
 
 
+# ১. সার্ভিস লিস্ট ফেচ করার রাউট
+@app.route("/api/services", methods=["GET"])
+def get_services():
+  payload = {"key": API_KEY, "action": "services"}
+  try:
+    response = requests.post(API_URL, data=payload)
+    return jsonify(response.json())
+  except Exception as e:
+    return jsonify({"error": str(e)})
+
+
+# ২. অর্ডার প্লেস করার রাউট
 @app.route("/api/order", methods=["POST"])
 def place_order():
   data = request.form.to_dict()
 
-  # ইউজার যে সার্ভিস বা লিংক দিয়েছে তা রিসিভ করা
   service_id = data.get("service")
   link = data.get("link")
   quantity = data.get("quantity")
@@ -25,8 +36,13 @@ def place_order():
   if not service_id or not link or not quantity:
     return jsonify({"status": "error", "message": "সব তথ্য সঠিকভাবে দিন!"})
 
-  # এপিআই পেমেন্ট বা অর্ডারের পেলোড তৈরি (সিক্রেট কি এখানে যুক্ত হবে, ব্রাউজারে যাবে না)
-  payload = {"key": API_KEY, "action": "add", "service": service_id, "link": link, "quantity": quantity}
+  payload = {
+      "key": API_KEY,
+      "action": "add",
+      "service": service_id,
+      "link": link,
+      "quantity": quantity,
+  }
 
   try:
     response = requests.post(API_URL, data=payload)
