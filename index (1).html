@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure SMM Order Portal</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+        .wrapper { max-width: 600px; margin: 0 auto; background: #1e293b; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #38bdf8; margin-top: 0; }
+        .balance-box { background: #334155; padding: 12px; border-radius: 6px; text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 20px; color: #34d399; }
+        .promo-banner { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; padding: 12px; border-radius: 6px; text-align: center; font-weight: bold; margin-bottom: 20px; font-size: 14px; }
+        .field { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #cbd5e1; }
+        input, select { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #475569; border-radius: 5px; color: #fff; font-size: 14px; }
+        button { background: #0ea5e9; color: #fff; border: none; padding: 12px; width: 100%; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #0284c7; }
+        .alert { padding: 12px; border-radius: 5px; margin-bottom: 15px; text-align: center; font-weight: bold; display: none; font-size: 14px; }
+        .success { background: #065f46; color: #6ee7b7; }
+        .error { background: #7f1d1d; color: #fca5a5; }
+        .table-box { max-height: 220px; overflow-y: auto; margin-top: 20px; border: 1px solid #475569; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid #334155; }
+        th { background: #334155; color: #e2e8f0; position: sticky; top: 0; }
+        td { color: #cbd5e1; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <h2>🚀 Secure SMM Portal</h2>
+
+    <div class="balance-box" id="balanceDisplay">
+        💰 প্যানেল ব্যালেন্স লোড হচ্ছে...
+    </div>
+
+    <div class="promo-banner">
+        🔥 স্পেশাল অফার: Facebook Profile/Page Followers ~ Bot Data ~ Max 200k ~ 10k/day ~ Instant ~ 365 D
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <form id="orderForm">
+        <div class="field">
+            <label>সার্ভিস সিলেক্ট করুন:</label>
+            <select id="serviceSelect" required>
+                <option value="">সার্ভিস লোড হচ্ছে...</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label>লিংক (Link):</label>
+            <input type="url" id="link" placeholder="https://..." required>
+        </div>
+
+        <div class="field">
+            <label>পরিমাণ (Quantity):</label>
+            <input type="number" id="quantity" placeholder="1000" required>
+        </div>
+
+        <button type="submit">অর্ডার সাবমিট করুন</button>
+    </form>
+
+    <h3 style="margin-top: 25px; font-size: 15px; color: #38bdf8;">📋 সার্ভিস লিস্ট ও রেট</h3>
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>নাম</th>
+                    <th>রেট ($/1k)</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="3" style="text-align: center;">অপেক্ষা করুন...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    async function loadPanel() {
+        try {
+            // ব্যালেন্স ফেচ
+            const balanceRes = await fetch('process.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action: 'balance' })
+            });
+            const balanceData = await balanceRes.json();
+            if (balanceData.balance !== undefined) {
+                document.getElementById('balanceDisplay').innerText = `💰 প্যানেল ব্যালেন্স: ${balanceData.balance} ${balanceData.currency || 'USD'}`;
+            } else {
+                document.getElementById('balanceDisplay').innerText = `❌ ব্যালেন্স চেক করতে সমস্যা হয়েছে`;
+            }
+
+            // সার্ভিস লিস্ট ফেচ
+            const serviceRes = await fetch('process.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action: 'services' })
+            });
+            const services = await serviceRes.json();
+
+            if (Array.isArray(services)) {
+                let options = '<option value="">-- সার্ভিস বেছে নিন --</option>';
+                let rows = '';
+                services.forEach(s => {
+                    options += `<option value="${s.service}">[ID: ${s.service}] ${s.name} ($${s.rate})</option>`;
+                    rows += `<tr><td>${s.service}</td><td>${s.name}</td><td>$${s.rate}</td></tr>`;
+                });
+                document.getElementById('serviceSelect').innerHTML = options;
+                document.getElementById('tableBody').innerHTML = rows;
+            }
+        } catch (e) {
+            document.getElementById('balanceDisplay').innerText = `❌ কানেকশন এরর`;
+        }
+    }
+
+    window.onload = loadPanel;
+
+    // অর্ডার সাবমিট
+    document.getElementById('orderForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const service = document.getElementById('serviceSelect').value;
+        const link = document.getElementById('link').value;
+        const quantity = document.getElementById('quantity').value;
+        const alertBox = document.getElementById('alertBox');
+
+        try {
+            const res = await fetch('process.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ action: 'add', service, link, quantity })
+            });
+            const result = await res.json();
+
+            alertBox.style.display = "block";
+            if (result.order) {
+                alertBox.className = "alert success";
+                alertBox.innerHTML = `✅ অর্ডার সফল হয়েছে! আইডি: ${result.order}`;
+                loadPanel();
+            } else {
+                alertBox.className = "alert error";
+                alertBox.innerHTML = `❌ ব্যর্থ হয়েছে: ${result.error || 'অজানা সমস্যা'}`;
+            }
+        } catch (err) {
+            alertBox.style.display = "block";
+            alertBox.className = "alert error";
+            alertBox.innerHTML = `❌ সার্ভার রিকোয়েস্ট যায়নি।`;
+        }
+    });
+</script>
+
+</body>
+                                              </html>
